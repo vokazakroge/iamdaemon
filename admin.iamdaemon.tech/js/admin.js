@@ -9,7 +9,7 @@ document.querySelectorAll('.btn-action.ban').forEach(btn => {
         if (!confirm(`${action} пользователя ${username}?`)) return;
 
         try {
-            const res = await fetch('/admin/api/ban.php', {
+            const res = await fetch('/api/ban.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, status: newStatus })
@@ -46,7 +46,7 @@ document.querySelectorAll('.btn-action.delete').forEach(btn => {
         if (!confirm(`УДАЛИТЬ пользователя ${username}?\n\nЭто удалит:\n- Аккаунт из базы\n- Все файлы с поддомена`)) return;
 
         try {
-            const res = await fetch('/admin/api/delete.php', {
+            const res = await fetch('/api/delete.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, id: parseInt(userId) })
@@ -81,7 +81,7 @@ document.querySelectorAll('.btn-action.view-files').forEach(btn => {
                         modal.style.display = 'flex';
 
                         try {
-                            const res = await fetch(`/admin/api/files.php?username=${username}`);
+                            const res = await fetch(`/api/files.php?username=${encodeURIComponent(username)}`);
                             const data = await res.json();
 
                             if (!res.ok || data.error) {
