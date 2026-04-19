@@ -4,52 +4,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REG — DAEMON</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/auth.css">
+    <title>DAEMON — Твой личный облачный сервис</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+         :root {
+            --bg: #05050a;
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.4);
+            --text: #ffffff;
+            --text-muted: #94a3b8;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+        /* Фон с эффектом */
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 40%);
+            opacity: 0.3;
+            z-index: -1;
+            animation: pulse 10s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.2);
+            }
+        }
+        
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            z-index: 1;
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            margin-bottom: 20px;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 16px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px var(--primary-glow);
+            background: #7c3aed;
+        }
+        
+        .features {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 60px;
+            flex-wrap: wrap;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 150px;
+        }
+        
+        .feature-card span {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card small {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="form-view" id="formView">
-            <header>
-                <a href="https://iamdaemon.tech" class="logo">DAEMON</a>
-                <h1>REG</h1>
-                <p class="subtitle">получи свой поддомен</p>
-                <div class="subdomain-preview" id="subdomainPreview">имя.iamdaemon.tech</div>
-            </header>
-            <form id="regForm" novalidate>
-                <div class="form-group">
-                    <label for="username">имя пользователя</label>
-                    <input type="text" id="username" placeholder="myname" required autocomplete="off" spellcheck="false">
-                    <div class="validation-msg" id="usernameMsg"></div>
-                </div>
-                <div class="form-group">
-                    <label for="email">email</label>
-                    <input type="email" id="email" placeholder="you@example.com" required>
-                    <div class="validation-msg" id="emailMsg"></div>
-                </div>
-                <div class="form-group">
-                    <label for="password">пароль</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
-                    <div class="validation-msg" id="passwordMsg"></div>
-                </div>
-                <button type="submit" id="submitBtn" disabled>создать аккаунт</button>
-            </form>
-            <div class="login-link">уже есть аккаунт? <a href="/login">войти</a></div>
-        </div>
-        <div class="success-view" id="successView">
-            <div style="font-size:2rem;margin-bottom:6px">✦</div>
-            <h2>добро пожаловать</h2>
-            <p>твой поддомен активирован</p>
-            <a id="userLink" class="user-link" href="#" target="_blank"></a>
-            <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-                <button id="dashboardBtn" style="background:var(--primary);color:#fff;font-size:0.85rem;padding:10px 16px;width:auto;margin:0">🔐 личный кабинет</button>
+        <h1>DAEMON</h1>
+        <p>
+            Твое личное облако для файлов, загрузки видео, сокращения ссылок и многого другого.<br> Приватно. Быстро. В одном месте.
+        </p>
+
+        <a href="https://reg.iamdaemon.tech" class="btn">НАЧАТЬ ПОЛЬЗОВАТЬСЯ</a>
+
+        <div class="features">
+            <div class="feature-card">
+                <span>📁</span>
+                <small>Файлы</small>
+            </div>
+            <div class="feature-card">
+                <span>📥</span>
+                <small>YouTube</small>
+            </div>
+            <div class="feature-card">
+                <span>🔗</span>
+                <small>Ссылки</small>
+            </div>
+            <div class="feature-card">
+                <span>️</span>
+                <small>Приватно</small>
             </div>
         </div>
     </div>
-
-    <script src="js/reg.js" defer></script>
 </body>
 
 </html>
