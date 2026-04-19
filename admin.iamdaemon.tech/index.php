@@ -1,11 +1,15 @@
 <?php
-require_once __DIR__ . '/../reg.iamdaemon.tech/config.php';
+require_once '/var/www/reg.iamdaemon.tech/config.php';
 requireAdmin();
 
 $db = getDb();
 
-// Получаем всех пользователей
-$users = $db->query("SELECT id, username, email, verified, created_at, status FROM users ORDER BY created_at DESC")->fetchArray(SQLITE3_ASSOC);
+// === ИСПРАВЛЕНИЕ: получаем ВСЕХ пользователей правильно ===
+$result = $db->query("SELECT id, username, email, verified, created_at, status FROM users ORDER BY created_at DESC");
+$users = [];
+while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $users[] = $row;
+}
 
 // Статистика
 $totalUsers = count($users);
@@ -160,10 +164,10 @@ if (is_dir($usersDir)) {
     </div>
 
     <!-- Modal для просмотра файлов -->
-    <div id="filesModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;">
-        <div class="modal-content" style="background:#12121a;border:1px solid #2a2a3a;border-radius:12px;padding:20px;width:90%;max-width:800px;max-height:80vh;overflow:auto;">
+    <div id="filesModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;">
+        <div style="background:#12121a;border:1px solid #2a2a3a;border-radius:12px;padding:20px;width:90%;max-width:800px;max-height:80vh;overflow:auto;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h3 id="modalTitle" style="font-family:'Orbitron',sans-serif;margin:0;">Files</h3>
+                <h3 id="modalTitle" style="font-family:'Orbitron',sans-serif;margin:0;color:#fff;">Files</h3>
                 <button id="closeModal" style="background:transparent;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">×</button>
             </div>
             <div id="filesList"></div>
