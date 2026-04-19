@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAEMON</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #0a0a0a;
+            --accent: #C773FF;
+            --glass: rgba(255, 255, 255, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(rgba(199, 115, 255, 0.04) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(199, 115, 255, 0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            animation: gridMove 30s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 60px 60px; }
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9.5rem;
+            font-weight: 700;
+            letter-spacing: 12px;
+            color: var(--accent);
+            display: inline-flex;
+            cursor: default;
+            text-shadow: 0 0 30px var(--accent), 0 0 60px var(--accent);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .logo span {
+            display: inline-block;
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes pulse {
+            0%, 100% { text-shadow: 0 0 25px var(--accent), 0 0 50px var(--accent), 0 0 80px rgba(199, 115, 255, 0.4); }
+            50% { text-shadow: 0 0 40px var(--accent), 0 0 75px var(--accent), 0 0 110px rgba(199, 115, 255, 0.6); }
+        }
+
+        .logo:hover {
+            text-shadow: 0 0 20px var(--accent), 0 0 45px var(--accent), 0 0 70px rgba(199, 115, 255, 0.35);
+        }
+
+        .logo:hover span:nth-child(1) { transform: translateX(-28px); }
+        .logo:hover span:nth-child(2) { transform: translateX(-14px); }
+        .logo:hover span:nth-child(3) { transform: translateX(-2px); }
+        .logo:hover span:nth-child(4) { transform: translateX(6px); }
+        .logo:hover span:nth-child(5) { transform: translateX(16px); }
+        .logo:hover span:nth-child(6) { transform: translateX(26px); }
+
+        .social-buttons {
+            display: flex;
+            gap: 1.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+        }
+
+        .social-btn {
+            width: 78px;
+            height: 78px;
+            background: var(--glass);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 2px 8px rgba(255, 255, 255, 0.08);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+        }
+
+        .social-btn:hover {
+            transform: translateY(-8px) scale(1.08);
+            border-color: var(--accent);
+            box-shadow: 0 15px 40px rgba(199, 115, 255, 0.25), inset 0 2px 12px rgba(255, 255, 255, 0.15);
+        }
+
+        .social-btn img {
+            width: 60px !important;
+            height: 60px !important;
+            object-fit: contain;
+            filter: brightness(1.15) drop-shadow(0 0 10px rgba(199, 115, 255, 0.7));
+            transition: all 0.4s ease;
+        }
+
+        .social-btn:hover img {
+            filter: brightness(1.3) drop-shadow(0 0 15px var(--accent));
+            transform: scale(1.08);
+        }
+
+        /* ==================== МОДАЛЬНОЕ ОКНО ==================== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show { opacity: 1; }
+
+        .modal-content {
+            background: #1a1a1a;
+            width: 400px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 25px 70px rgba(199, 115, 255, 0.25);
+            transform: scale(0.7) translateY(40px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        .modal-header {
+            height: 140px;
+            background: linear-gradient(135deg, #C773FF, #9b5de5, #6e44ff);
+            position: relative;
+        }
+
+        .modal-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            border: 7px solid #1a1a1a;
+            position: absolute;
+            bottom: -48px;
+            left: 32px;
+            overflow: hidden;
+            box-shadow: 0 0 0 6px rgba(199, 115, 255, 0.3);
+        }
+
+        .modal-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-body {
+            padding: 68px 32px 40px;
+            text-align: center;
+        }
+
+        .modal-name {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .modal-username {
+            color: #aaaaaa;
+            font-size: 17px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 32px;
+            color: #fff;
+            cursor: pointer;
+            opacity: 0.75;
+            transition: opacity 0.2s;
+        }
+
+        .modal-close:hover { opacity: 1; }
+
+        /* ==================== СКРЫТАЯ КНОПКА ==================== */
+        /* Круглая точка, почти сливается с фоном.
+           При наведении — слабое фиолетовое свечение в тон акценту */
+        .secret-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid rgba(199, 115, 255, 0.07);
+            background: transparent;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .secret-btn::after {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(199, 115, 255, 0.1);
+            transition: background 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .secret-btn:hover {
+            border-color: rgba(199, 115, 255, 0.4);
+            box-shadow: 0 0 14px rgba(199, 115, 255, 0.15);
+        }
+
+        .secret-btn:hover::after {
+            background: rgba(199, 115, 255, 0.7);
+            box-shadow: 0 0 8px rgba(199, 115, 255, 0.8);
+        }
+
+        /* Адаптив */
+        @media (max-width: 768px) {
+            .logo { font-size: 6.8rem; letter-spacing: 8px; }
+            .modal-content { width: 92%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <span>D</span><span>A</span><span>E</span><span>M</span><span>O</span><span>N</span>
+        </div>
+
+        <div class="social-buttons">
+            <a href="https://t.me/iamdaemon0"
+               class="social-btn"
+               target="_blank"
+               title="Telegram">
+                <img src="https://iamdaemon.tech/telegram_logo.png" alt="Telegram">
+            </a>
+
+            <div class="social-btn" id="discordBtn" title="Discord Profile">
+                <img src="https://iamdaemon.tech/discord_logo.png" alt="Discord">
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно Discord -->
+    <div class="modal" id="discordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-close" id="closeModal">×</div>
+                <div class="modal-avatar">
+                    <img src="https://iamdaemon.tech/cat.png" alt="Daemon">
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="modal-name">Daemon</div>
+                <div class="modal-username">@iamdaemon0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрытая кнопка регистрации -->
+    <a href="https://reg.iamdaemon.tech" class="secret-btn"></a>
+
+    <script>
+        const discordBtn = document.getElementById('discordBtn');
+        const modal = document.getElementById('discordModal');
+        const closeModal = document.getElementById('closeModal');
+
+        discordBtn.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        });
+
+        function closeModalWindow() {
+            modal.classList.remove('show');
+            setTimeout(() => { modal.style.display = 'none'; }, 400);
+        }
+
+        closeModal.addEventListener('click', closeModalWindow);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModalWindow();
+        });
+    </script>
+</body>
+</html>
