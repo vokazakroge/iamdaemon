@@ -41,8 +41,9 @@ body {
     top: 0;
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s ease, width 0.3s ease;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
+    overflow: hidden;
 }
 
 .sidebar.collapsed {
@@ -55,6 +56,7 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border);
+    min-height: 70px;
 }
 
 .logo {
@@ -64,10 +66,13 @@ body {
     color: var(--primary);
     text-decoration: none;
     white-space: nowrap;
+    transition: opacity 0.2s;
 }
 
 .sidebar.collapsed .logo {
-    font-size: 1.2rem;
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
 }
 
 .sidebar-toggle {
@@ -79,6 +84,7 @@ body {
     padding: 8px;
     border-radius: 8px;
     transition: 0.2s;
+    flex-shrink: 0;
 }
 
 .sidebar-toggle:hover {
@@ -91,8 +97,9 @@ body {
 
 .sidebar-nav {
     flex: 1;
-    padding: 20px 0;
+    padding: 15px 0;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .nav-item {
@@ -104,6 +111,7 @@ body {
     text-decoration: none;
     transition: 0.2s;
     position: relative;
+    white-space: nowrap;
 }
 
 .nav-item:hover {
@@ -118,9 +126,33 @@ body {
 }
 
 .nav-item i {
-    font-size: 1.2rem;
-    width: 24px;
-    text-align: center;
+    font-size: 1.3rem;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.nav-item span {
+    transition: opacity 0.2s;
+    opacity: 1;
+}
+
+.sidebar.collapsed .nav-item span:not(.badge) {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+}
+
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 14px 0;
+}
+
+.sidebar.collapsed .nav-item i {
+    margin: 0;
 }
 
 .nav-item .badge {
@@ -131,22 +163,21 @@ body {
     padding: 2px 8px;
     border-radius: 10px;
     font-weight: 600;
+    transition: opacity 0.2s;
 }
 
-.sidebar.collapsed .nav-item span:not(.badge) {
-    display: none;
-}
-
-.sidebar.collapsed .nav-item {
-    justify-content: center;
-    padding: 14px;
+.sidebar.collapsed .nav-item .badge {
+    opacity: 0;
+    width: 0;
+    padding: 0;
+    overflow: hidden;
 }
 
 
 /* FOOTER */
 
 .sidebar-footer {
-    padding: 20px;
+    padding: 15px 20px;
     border-top: 1px solid var(--border);
 }
 
@@ -154,6 +185,11 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    overflow: hidden;
+}
+
+.user-avatar {
+    flex-shrink: 0;
 }
 
 .user-avatar img {
@@ -166,6 +202,14 @@ body {
 
 .user-details {
     flex: 1;
+    min-width: 0;
+    transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .user-details {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
 }
 
 .username {
@@ -184,14 +228,11 @@ body {
     align-items: center;
     gap: 5px;
     transition: 0.2s;
+    white-space: nowrap;
 }
 
 .logout-link:hover {
     color: var(--danger);
-}
-
-.sidebar.collapsed .user-details {
-    display: none;
 }
 
 
@@ -200,13 +241,15 @@ body {
 .main-content {
     flex: 1;
     margin-left: var(--sidebar-width);
-    padding: 20px;
-    transition: margin-left 0.3s ease;
+    padding: 20px 30px;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 100vh;
+    width: calc(100% - var(--sidebar-width));
 }
 
-.sidebar.collapsed+.main-content {
+.sidebar.collapsed~.main-content {
     margin-left: var(--sidebar-collapsed);
+    width: calc(100% - var(--sidebar-collapsed));
 }
 
 
@@ -222,6 +265,7 @@ body {
 }
 
 .menu-btn {
+    display: none;
     background: transparent;
     border: none;
     color: var(--muted);
@@ -243,7 +287,7 @@ body {
     align-items: center;
     gap: 12px;
     background: rgba(139, 92, 246, 0.1);
-    padding: 10px 16px;
+    padding: 12px 20px;
     border-radius: 10px;
     border: 1px solid var(--primary);
 }
@@ -256,10 +300,13 @@ body {
     flex: 1;
     font-family: 'Orbitron', monospace;
     font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .btn-small {
-    padding: 6px 14px;
+    padding: 8px 16px;
     background: var(--primary);
     color: white;
     text-decoration: none;
@@ -267,6 +314,7 @@ body {
     font-size: 0.85rem;
     font-weight: 600;
     transition: 0.2s;
+    white-space: nowrap;
 }
 
 .btn-small:hover {
@@ -342,40 +390,51 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
 }
 
 .file-icon {
     color: var(--primary);
     font-size: 1.2rem;
+    flex-shrink: 0;
 }
 
 .filename-text {
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .file-actions {
     display: flex;
     gap: 8px;
+    flex-shrink: 0;
 }
 
 .btn-icon {
     background: transparent;
-    border: none;
+    border: 1px solid var(--border);
     color: var(--muted);
     cursor: pointer;
-    padding: 6px 10px;
+    padding: 8px;
     border-radius: 6px;
     transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-icon:hover {
     background: rgba(139, 92, 246, 0.1);
     color: var(--primary);
+    border-color: var(--primary);
 }
 
 .btn-icon.delete:hover {
     background: rgba(239, 68, 68, 0.1);
     color: var(--danger);
+    border-color: var(--danger);
 }
 
 .file-size {
@@ -383,6 +442,7 @@ body {
     font-size: 0.9rem;
     min-width: 70px;
     text-align: right;
+    flex-shrink: 0;
 }
 
 .empty-msg {
@@ -559,21 +619,13 @@ body {
     margin-bottom: 20px;
 }
 
-.input-group input {
-    flex: 1;
-    padding: 12px 16px;
-    background: rgba(139, 92, 246, 0.05);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-}
-
 
 /* MOBILE */
 
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
+        width: var(--sidebar-width) !important;
     }
 
     .sidebar.mobile-open {
@@ -581,10 +633,20 @@ body {
     }
 
     .main-content {
-        margin-left: 0;
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 15px;
     }
 
-    .sidebar.collapsed+.main-content {
-        margin-left: 0;
+    .menu-btn {
+        display: block;
+    }
+
+    .top-bar {
+        gap: 10px;
+    }
+
+    .site-preview span {
+        font-size: 0.8rem;
     }
 }
