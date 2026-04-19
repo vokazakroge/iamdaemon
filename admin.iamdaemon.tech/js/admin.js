@@ -1,5 +1,5 @@
-// Глобальные функции для inline onclick
-function banUser(username, status) {
+// Глобальные функции (через window)
+window.banUser = function(username, status) {
     console.log('🔒 banUser:', username, status);
     var newStatus = status === 'active' ? 'banned' : 'active';
 
@@ -28,9 +28,9 @@ function banUser(username, status) {
         .catch(function(e) {
             alert('Ошибка: ' + e.message);
         });
-}
+};
 
-function deleteUser(username, id) {
+window.deleteUser = function(username, id) {
     console.log('🗑️ deleteUser:', username, id);
 
     if (!confirm('УДАЛИТЬ пользователя ' + username + '?')) return;
@@ -58,9 +58,9 @@ function deleteUser(username, id) {
         .catch(function(e) {
             alert('Ошибка: ' + e.message);
         });
-}
+};
 
-function viewFiles(username) {
+window.viewFiles = function(username) {
     console.log('📁 viewFiles:', username);
     var modal = document.getElementById('filesModal');
     var modalTitle = document.getElementById('modalTitle');
@@ -106,17 +106,19 @@ function viewFiles(username) {
         .catch(function(e) {
             filesList.innerHTML = '<p style="color:#ef4444;">Error: ' + e.message + '</p>';
         });
-}
+};
 
-function closeFilesModal() {
+window.closeFilesModal = function() {
     document.getElementById('filesModal').style.display = 'none';
-}
+};
 
 // Закрытие модалки по клику вне её
-document.getElementById('filesModal').onclick = function(e) {
-    if (e.target === this) {
-        closeFilesModal();
-    }
-};
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('filesModal').onclick = function(e) {
+        if (e.target === this) {
+            window.closeFilesModal();
+        }
+    };
+});
 
 console.log('✅ Admin JS loaded');
