@@ -1,20 +1,32 @@
 <?php
 require_once __DIR__ . '/../config.php';
 
-// Получаем данные из Nginx
+// Получаем данные от Nginx
 $shortCode = $_SERVER['SHORT_CODE'] ?? '';
-$username = $_SERVER['SUBDOMAIN'] ?? '';
+$subdomain = $_SERVER['SUBDOMAIN'] ?? '';
 
-if (!$shortCode || !$username) {
+// Если переменные не переданы, пробуем из URL
+if (!$shortCode) {
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    if (preg_match('#/go/([a-zA-Z0-9]+)#', $requestUri, $matches)) {
+        $shortCode = $matches[1];
+    }
+}
+
+if (!$subdomain) {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $subdomain = str_replace('.iamdaemon.tech', '', $host);
+}
+
+if (!$shortCode || !$subdomain) {
     http_response_code(400);
-    echo "<h1>400 Bad Request</h1>";
-    echo "<p>Invalid URL format</p>";
+    echo "<h1>400 Bad Request</h1><p>Invalid URL</p>";
     exit;
 }
 
 $db = getDb();
 
-// Ищем ссылку в базе
+// Ищем ссылку
 $stmt = $db->prepare('
     SELECT su.long_url, u.username 
     FROM short_urls su 
@@ -22,22 +34,19 @@ $stmt = $db->prepare('
     WHERE su.short_code = :code AND u.username = :user
 ');
 $stmt->bindValue(':code', $shortCode, SQLITE3_TEXT);
-$stmt->bindValue(':user', $username, SQLITE3_TEXT);
+$stmt->bindValue(':user', $subdomain, SQLITE3_TEXT);
 $url = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 
 if ($url) {
-    // Увеличиваем счётчик переходов
-    $stmt = $db->prepare('UPDATE short_urls SET clicks = clicks + 1 WHERE id = (
-        SELECT id FROM short_urls WHERE short_code = :code
-    )');
+    // Увеличиваем счетчик
+    $stmt = $db->prepare('UPDATE short_urls SET clicks = clicks + 1 WHERE short_code = :code');
     $stmt->bindValue(':code', $shortCode, SQLITE3_TEXT);
     $stmt->execute();
 
-    // Редирект 302 (временный)
+    // Редирект
     header('Location: ' . $url['long_url'], true, 302);
     exit;
 } else {
-    // Ссылка не найдена
     http_response_code(404);
     ?>
     <!DOCTYPE html>
@@ -45,7 +54,7 @@ if ($url) {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>404 - Ссылка не найдена</title>
+        <title>404 - Ссылка не найдена | DAEMON</title>
         <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
         <style>
             :root { --bg: #0a0a0f; --text: #e2e8f0; --muted: #94a3b8; --primary: #8b5cf6; }
@@ -62,22 +71,9 @@ if ($url) {
                 text-align: center;
                 padding: 20px;
             }
-            h1 {
-                font-family: 'Orbitron', sans-serif;
-                font-size: 4rem;
-                color: var(--primary);
-                margin-bottom: 20px;
-            }
-            p {
-                font-size: 1.2rem;
-                color: var(--muted);
-                margin-bottom: 30px;
-            }
-            a {
-                color: var(--primary);
-                text-decoration: none;
-                font-weight: 600;
-            }
+            h1 { font-family: 'Orbitron', sans-serif; font-size: 4rem; color: var(--primary); margin-bottom: 20px; }
+            p { font-size: 1.2rem; color: var(--muted); margin-bottom: 30px; }
+            a { color: var(--primary); text-decoration: none; font-weight: 600; }
             a:hover { text-decoration: underline; }
         </style>
     </head>
