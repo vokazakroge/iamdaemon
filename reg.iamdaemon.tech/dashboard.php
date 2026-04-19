@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 requireLogin();
-checkUserStatus(); // Проверка бана при каждом входе
+checkUserStatus();
 
 $username = $_SESSION['username'];
 $userDir = "/var/www/users/$username";
@@ -23,7 +23,6 @@ if (is_dir($userDir)) {
         }
     }
 }
-// Сортировка: папки сверху, файлы снизу, по алфавиту
 usort($files, function($a, $b) {
     return ($a['is_dir'] == $b['is_dir']) ? strcasecmp($a['name'], $b['name']) : ($a['is_dir'] ? -1 : 1);
 });
@@ -50,13 +49,13 @@ usort($files, function($a, $b) {
             <span class="logo">DAEMON / DASHBOARD</span>
             <div style="display: flex; align-items: center; gap: 12px">
                 <span class="user-badge">👤 <?php echo htmlspecialchars($username); ?></span>
-                <!-- КНОПКА НАСТРОЕК -->
+                <!-- ДОБАВИЛ КНОПКУ СОКРАЩАТЕЛЯ -->
+                <a href="https://reg.iamdaemon.tech/shortener.php" class="logout" style="background:#10b981; border:none; color:#fff;">✂️ Links</a>
                 <a href="https://reg.iamdaemon.tech/settings.php" class="logout" style="background:var(--primary); border:none; color:#fff;">⚙️ Settings</a>
                 <a href="https://reg.iamdaemon.tech/logout.php" class="logout">Logout</a>
             </div>
         </header>
 
-        <!-- КНОПКА ПЕРЕХОДА НА САЙТ -->
         <div style="background: rgba(139,92,246,0.1); border: 1px solid #8b5cf6; border-radius: 10px; padding: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center">
             <div>
                 <strong>🌐 Твой сайт</strong><br>
