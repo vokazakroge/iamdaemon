@@ -1,19 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 header('Content-Type: application/json; charset=utf-8');
-$stmt = $db->prepare('SELECT id, status FROM users WHERE username = :u');
-$stmt->bindValue(':u', $username, SQLITE3_TEXT);
-$existingUser = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
-
-if ($existingUser) {
-    if ($existingUser['status'] === 'banned') {
-        http_response_code(403);
-        echo json_encode(['error' => 'Это имя заблокировано']);
-    } else {
-        http_response_code(409);
-        echo json_encode(['error' => 'Ник уже занят']);
-    }
-    exit;
-}
 
 try {
     require_once __DIR__ . '/../config.php';
@@ -24,6 +12,7 @@ try {
     $email = strtolower(trim($input['email'] ?? ''));
     $password = $input['password'] ?? '';
 
+    // Валидация
     if (!$username || !$email || !$password) {
         http_response_code(400);
         echo json_encode(['error' => 'Заполни все поля']);
@@ -38,12 +27,28 @@ try {
 
     $db = getDb();
 
-    $stmt = $db->prepare('SELECT id FROM users WHERE username = :u OR email = :e');
+    // Проверка на существующего (включая забаненных)
+    $stmt = $db->prepare('SELECT id, status FROM users WHERE username = :u');
     $stmt->bindValue(':u', $username, SQLITE3_TEXT);
+    $existingUser = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+
+    if ($existingUser) {
+        if ($existingUser['status'] === 'banned') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Это имя заблокировано']);
+        } else {
+            http_response_code(409);
+            echo json_encode(['error' => 'Ник уже занят']);
+        }
+        exit;
+    }
+
+    // Проверка email
+    $stmt = $db->prepare('SELECT id FROM users WHERE email = :e');
     $stmt->bindValue(':e', $email, SQLITE3_TEXT);
     if ($stmt->execute()->fetchArray()) {
         http_response_code(409);
-        echo json_encode(['error' => 'Ник или Email уже заняты']);
+        echo json_encode(['error' => 'Email уже занят']);
         exit;
     }
 
@@ -63,14 +68,11 @@ try {
     $subject = "Твой код доступа к DAEMON";
     $htmlBody = "<h2>Привет, {$username}!</h2><p>Код подтверждения: <b style='font-size:28px;letter-spacing:4px;'>{$code}</b></p>";
     
-    error_log("Отправка письма на: $email");
     $mailResult = sendEmail($email, $subject, $htmlBody);
     
     if ($mailResult === true) {
-        error_log("Письмо успешно отправлено");
         echo json_encode(['success' => true, 'message' => 'Код отправлен на почту']);
     } else {
-        error_log("Ошибка отправки письма: $mailResult");
         // Не удаляем пользователя, даём шанс resend
         http_response_code(500);
         echo json_encode(['error' => 'Не удалось отправить письмо: ' . $mailResult]);
