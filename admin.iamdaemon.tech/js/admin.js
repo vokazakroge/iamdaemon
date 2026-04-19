@@ -1,62 +1,94 @@
 // Глобальные функции (через window)
 window.banUser = function(username, status) {
-    console.log('🔒 banUser:', username, status);
+    console.log('🔒 banUser вызвана:', username, status);
     var newStatus = status === 'active' ? 'banned' : 'active';
 
-    if (!confirm('Заблокировать пользователя ' + username + '?')) return;
+    if (!confirm('Заблокировать пользователя ' + username + '?')) {
+        console.log('❌ Отменено пользователем');
+        return;
+    }
+
+    console.log('📤 Отправка POST /api/ban.php');
 
     fetch('/api/ban.php', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 username: username,
                 status: newStatus
             })
         })
-        .then(function(r) {
-            return r.json();
+        .then(function(response) {
+            console.log('📥 Ответ сервера:', response.status);
+            return response.text();
         })
-        .then(function(data) {
-            if (data.error) {
-                alert('Ошибка: ' + data.error);
-            } else {
-                location.reload();
+        .then(function(text) {
+            console.log('📄 Текст ответа:', text);
+            try {
+                var data = JSON.parse(text);
+                if (data.error) {
+                    console.error('❌ Ошибка от API:', data.error);
+                    alert('Ошибка: ' + data.error);
+                } else {
+                    console.log('✅ Успех! Перезагрузка...');
+                    location.reload();
+                }
+            } catch (e) {
+                console.error('❌ Не JSON:', text);
+                alert('Сервер вернул не JSON: ' + text.substring(0, 100));
             }
         })
         .catch(function(e) {
-            alert('Ошибка: ' + e.message);
+            console.error('❌ Ошибка fetch:', e);
+            alert('Ошибка сети: ' + e.message);
         });
 };
 
 window.deleteUser = function(username, id) {
-    console.log('🗑️ deleteUser:', username, id);
+    console.log('🗑️ deleteUser вызвана:', username, id);
 
-    if (!confirm('УДАЛИТЬ пользователя ' + username + '?')) return;
+    if (!confirm('УДАЛИТЬ пользователя ' + username + '?')) {
+        console.log('❌ Отменено пользователем');
+        return;
+    }
+
+    console.log('📤 Отправка POST /api/delete.php');
 
     fetch('/api/delete.php', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 username: username,
                 id: parseInt(id)
             })
         })
-        .then(function(r) {
-            return r.json();
+        .then(function(response) {
+            console.log('📥 Ответ сервера:', response.status);
+            return response.text();
         })
-        .then(function(data) {
-            if (data.error) {
-                alert('Ошибка: ' + data.error);
-            } else {
-                location.reload();
+        .then(function(text) {
+            console.log('📄 Текст ответа:', text);
+            try {
+                var data = JSON.parse(text);
+                if (data.error) {
+                    console.error('❌ Ошибка от API:', data.error);
+                    alert('Ошибка: ' + data.error);
+                } else {
+                    console.log('✅ Успех! Перезагрузка...');
+                    location.reload();
+                }
+            } catch (e) {
+                console.error('❌ Не JSON:', text);
+                alert('Сервер вернул не JSON: ' + text.substring(0, 100));
             }
         })
         .catch(function(e) {
-            alert('Ошибка: ' + e.message);
+            console.error('❌ Ошибка fetch:', e);
+            alert('Ошибка сети: ' + e.message);
         });
 };
 
