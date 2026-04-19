@@ -4,7 +4,7 @@ requireAdmin();
 
 $db = getDb();
 
-// === ИСПРАВЛЕНИЕ: получаем ВСЕХ пользователей правильно ===
+// Получаем всех пользователей
 $result = $db->query("SELECT id, username, email, verified, created_at, status FROM users ORDER BY created_at DESC");
 $users = [];
 while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
@@ -116,10 +116,14 @@ if (is_dir($usersDir)) {
                             </span>
                         </td>
                         <td class="actions">
-                            <button class="btn-action ban" data-username="<?php echo htmlspecialchars($u['username']); ?>" data-status="<?php echo $u['status']; ?>" title="Ban/Unban">
+                            <button class="btn-action ban" 
+                                    onclick="banUser('<?php echo htmlspecialchars($u['username']); ?>', '<?php echo $u['status']; ?>')"
+                                    title="Ban/Unban">
                                 <?php echo $u['status'] === 'active' ? '🔒' : '🔓'; ?>
                             </button>
-                            <button class="btn-action delete" data-username="<?php echo htmlspecialchars($u['username']); ?>" data-id="<?php echo $u['id']; ?>" title="Delete user">
+                            <button class="btn-action delete" 
+                                    onclick="deleteUser('<?php echo htmlspecialchars($u['username']); ?>', <?php echo $u['id']; ?>)"
+                                    title="Delete user">
                                 🗑️
                             </button>
                             <a href="https://<?php echo htmlspecialchars($u['username']); ?>.iamdaemon.tech" target="_blank" class="btn-action" title="Open site">
@@ -152,7 +156,9 @@ if (is_dir($usersDir)) {
                         <td><?php echo $sub['size']; ?> KB</td>
                         <td><a href="https://<?php echo htmlspecialchars($sub['name']); ?>.iamdaemon.tech" target="_blank" class="link">Open ↗</a></td>
                         <td>
-                            <button class="btn-action view-files" data-username="<?php echo htmlspecialchars($sub['name']); ?>" title="View files">
+                            <button class="btn-action view-files" 
+                                    onclick="viewFiles('<?php echo htmlspecialchars($sub['name']); ?>')"
+                                    title="View files">
                                 📁 Files
                             </button>
                         </td>
@@ -168,7 +174,7 @@ if (is_dir($usersDir)) {
         <div style="background:#12121a;border:1px solid #2a2a3a;border-radius:12px;padding:20px;width:90%;max-width:800px;max-height:80vh;overflow:auto;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                 <h3 id="modalTitle" style="font-family:'Orbitron',sans-serif;margin:0;color:#fff;">Files</h3>
-                <button id="closeModal" style="background:transparent;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">×</button>
+                <button id="closeModal" onclick="closeFilesModal()" style="background:transparent;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">×</button>
             </div>
             <div id="filesList"></div>
         </div>
