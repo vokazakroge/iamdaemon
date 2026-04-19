@@ -21,7 +21,7 @@ function getDb() {
     if ($db === null) {
         $db = new SQLite3(DB_PATH, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
         $db->busyTimeout(5000);
-        
+
         // Создаём таблицу, если нет
         $db->exec("CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,7 +31,8 @@ function getDb() {
             code TEXT DEFAULT NULL,
             verified INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'active'
+            status TEXT DEFAULT 'active',
+            avatar TEXT DEFAULT NULL
         )");
 
         // Авто-миграция (добавляет колонки, если их нет)
@@ -43,6 +44,7 @@ function getDb() {
         if (!in_array('code', $colNames)) $db->exec("ALTER TABLE users ADD COLUMN code TEXT DEFAULT NULL");
         if (!in_array('verified', $colNames)) $db->exec("ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0");
         if (!in_array('status', $colNames)) $db->exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'");
+        if (!in_array('avatar', $colNames)) $db->exec("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT NULL");
     }
     return $db;
 }

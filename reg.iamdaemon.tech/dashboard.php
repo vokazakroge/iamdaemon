@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 requireLogin();
-checkUserStatus();
+checkUserStatus(); // Проверка бана при каждом входе
 
 $username = $_SESSION['username'];
 $userDir = "/var/www/users/$username";
@@ -10,18 +10,23 @@ $files = [];
 if (is_dir($userDir)) {
     foreach (scandir($userDir) as $file) {
         if ($file !== '.' && $file !== '..' && $file !== '.htaccess') {
-            $size = is_file("$userDir/$file") ? round(filesize("$userDir/$file") / 1024, 1) . ' KB' : 'DIR';
+            $path = "$userDir/$file";
+            $size = is_file($path) ? round(filesize($path) / 1024, 1) . ' KB' : 'DIR';
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-            $editable = in_array($ext, ['html', 'htm', 'css', 'js', 'json', 'txt', 'md', 'xml', 'svg']);
+            $editable = in_array($ext, ['html', 'htm', 'css', 'js', 'json', 'txt', 'md', 'xml', 'svg', 'php']);
             $files[] = [
                 'name' => $file,
                 'size' => $size,
-                'is_dir' => is_dir("$userDir/$file"),
+                'is_dir' => is_dir($path),
                 'editable' => $editable
             ];
         }
     }
 }
+// Сортировка: папки сверху, файлы снизу, по алфавиту
+usort($files, function($a, $b) {
+    return ($a['is_dir'] == $b['is_dir']) ? strcasecmp($a['name'], $b['name']) : ($a['is_dir'] ? -1 : 1);
+});
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -45,6 +50,8 @@ if (is_dir($userDir)) {
             <span class="logo">DAEMON / DASHBOARD</span>
             <div style="display: flex; align-items: center; gap: 12px">
                 <span class="user-badge">👤 <?php echo htmlspecialchars($username); ?></span>
+                <!-- КНОПКА НАСТРОЕК -->
+                <a href="https://reg.iamdaemon.tech/settings.php" class="logout" style="background:var(--primary); border:none; color:#fff;">⚙️ Settings</a>
                 <a href="https://reg.iamdaemon.tech/logout.php" class="logout">Logout</a>
             </div>
         </header>
@@ -53,9 +60,9 @@ if (is_dir($userDir)) {
         <div style="background: rgba(139,92,246,0.1); border: 1px solid #8b5cf6; border-radius: 10px; padding: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center">
             <div>
                 <strong>🌐 Твой сайт</strong><br>
-                <small style="color: #94a3b8">https://<?php echo $username; ?>.iamdaemon.tech</small>
+                <small style="color: #94a3b8">https://<?php echo htmlspecialchars($username); ?>.iamdaemon.tech</small>
             </div>
-            <a href="https://<?php echo $username; ?>.iamdaemon.tech" target="_blank" class="upload-btn" style="margin:0; padding: 10px 20px">Открыть сайт ↗</a>
+            <a href="https://<?php echo htmlspecialchars($username); ?>.iamdaemon.tech" target="_blank" class="upload-btn" style="margin:0; padding: 10px 20px">Открыть сайт ↗</a>
         </div>
 
         <h2>Files</h2>
@@ -87,8 +94,8 @@ if (is_dir($userDir)) {
 
         <div class="upload-zone" id="dropZone">
             <p style="font-size: 1.2rem">Drop files here</p>
-            <small>Allowed: html, css, js, png, jpg, svg, json, txt, zip (max 20 MB)</small><br>
-            <input type="file" id="fileInput" class="hidden" multiple accept=".html,.css,.js,.json,.txt,.xml,.png,.jpg,.jpeg,.gif,.svg,.ico,.pdf,.md,.zip">
+            <small>Allowed: html, css, js, png, jpg, svg, json, txt, zip, php (max 20 MB)</small><br>
+            <input type="file" id="fileInput" class="hidden" multiple accept=".html,.css,.js,.json,.txt,.xml,.png,.jpg,.jpeg,.gif,.svg,.ico,.pdf,.md,.zip,.php">
             <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Select Files</button>
             <div class="status-msg" id="statusMsg"></div>
         </div>
