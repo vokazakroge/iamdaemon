@@ -39,18 +39,20 @@ try {
         exit;
     }
 
-    // Удаляем папку (и из users, и из users_banned)
-    $userDir = "/var/www/users/$username";
-    $bannedDir = "/var/www/users_banned/$username";
+    // Удаляем папки (и из users, и из users_banned)
+    $dirsToDelete = [
+        "/var/www/users/$username",
+        "/var/www/users_banned/$username"
+    ];
     
-    foreach ([$userDir, $bannedDir] as $dir) {
+    foreach ($dirsToDelete as $dir) {
         if (is_dir($dir)) {
-            $files = new RecursiveIteratorIterator(
+            $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
                 RecursiveIteratorIterator::CHILD_FIRST
             );
             
-            foreach ($files as $file) {
+            foreach ($iterator as $file) {
                 if ($file->isDir()) {
                     rmdir($file->getPathname());
                 } else {
@@ -58,7 +60,7 @@ try {
                 }
             }
             rmdir($dir);
-            error_log("DELETED directory: $dir");
+            error_log("DELETED: $dir");
         }
     }
 

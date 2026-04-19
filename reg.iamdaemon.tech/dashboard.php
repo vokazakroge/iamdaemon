@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 requireLogin();
+checkUserStatus();
 
 $username = $_SESSION['username'];
 $userDir = "/var/www/users/$username";
