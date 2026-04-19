@@ -31,17 +31,19 @@ function getDb() {
             status TEXT DEFAULT 'active'
         )");
 
-        // === АВТОМИГРАЦИЯ: добавляем колонки, если их нет ===
-        $cols = $db->query("PRAGMA table_info(users)")->fetchArray(SQLITE3_ASSOC);
+        // === ПРОВЕРКА И ДОБАВЛЕНИЕ КОЛОНОК ===
+        $result = $db->query("PRAGMA table_info(users)");
         $colNames = [];
-        while ($cols) {
-            $colNames[] = $cols['name'];
-            $cols = $db->query("PRAGMA table_info(users)")->fetchArray(SQLITE3_ASSOC);
+        while ($col = $result->fetchArray(SQLITE3_ASSOC)) {
+            $colNames[] = $col['name'];
         }
         
+        // Добавляем code, если нет
         if (!in_array('code', $colNames)) {
             $db->exec("ALTER TABLE users ADD COLUMN code TEXT DEFAULT NULL");
         }
+        
+        // Добавляем verified, если нет
         if (!in_array('verified', $colNames)) {
             $db->exec("ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0");
         }
@@ -61,7 +63,7 @@ function requireLogin() {
 }
 
 function isAdmin() {
-    return isLoggedIn() && $_SESSION['username'] === 'vokazakroge'; // Замени на свой
+    return isLoggedIn() && $_SESSION['username'] === 'vokazakroge';
 }
 
 function requireAdmin() {
