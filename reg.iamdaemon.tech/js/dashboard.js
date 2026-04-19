@@ -1,51 +1,43 @@
-// ================= NAVIGATION (SPA) =================
-const navItems = document.querySelectorAll('.nav-item[data-target]');
-const sections = document.querySelectorAll('.content-section');
-
-navItems.forEach(item => {
-    item.addEventListener('click', (e) => {
+// ================= NAVIGATION =================
+document.querySelectorAll('.nav-item[data-target]').forEach(item => {
+    item.addEventListener('click', e => {
         e.preventDefault();
-        navItems.forEach(n => n.classList.remove('active'));
-        sections.forEach(s => s.classList.remove('active'));
-
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
         item.classList.add('active');
-        const targetId = item.getAttribute('data-target');
-        const targetSection = document.getElementById(targetId);
-
-        if (targetSection) {
-            targetSection.classList.add('active');
-            if (targetId === 'section-shortener') loadUrls();
+        const t = document.getElementById(item.dataset.target);
+        if (t) {
+            t.classList.add('active');
+            if (item.dataset.target === 'section-shortener') loadUrls();
         }
     });
 });
 
 // ================= SIDEBAR =================
-const sidebar = document.getElementById('sidebar');
-const sidebarToggle = document.getElementById('sidebarToggle');
+const sb = document.getElementById('sidebar');
+const sbToggle = document.getElementById('sidebarToggle');
 const menuBtn = document.getElementById('menuBtn');
 
-if (sidebarToggle) {
-    sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-        const isCollapsed = sidebar.classList.contains('collapsed');
-        sidebarToggle.innerHTML = isCollapsed ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
-        localStorage.setItem('sidebarCollapsed', isCollapsed);
+if (sbToggle) {
+    sbToggle.addEventListener('click', () => {
+        sb.classList.toggle('collapsed');
+        const c = sb.classList.contains('collapsed');
+        sbToggle.innerHTML = c ? '<i class="fas fa-chevron-right"></i>' : '<i class="fas fa-chevron-left"></i>';
+        localStorage.setItem('sidebarCollapsed', c);
     });
-    if (localStorage.getItem('sidebarCollapsed') === 'true') sidebar.classList.add('collapsed');
+    if (localStorage.getItem('sidebarCollapsed') === 'true') sb.classList.add('collapsed');
 }
-if (menuBtn) menuBtn.addEventListener('click', () => sidebar.classList.toggle('mobile-open'));
+if (menuBtn) menuBtn.addEventListener('click', () => sb.classList.toggle('mobile-open'));
 
-// ================= FILE UPLOAD =================
+// ================= UPLOAD =================
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const uploadMsg = document.getElementById('uploadMsg');
 
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, preventDefaults, false));
-
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+}, false));
 ['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.add('dragover'), false));
 ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.remove('dragover'), false));
 
@@ -55,49 +47,43 @@ fileInput.addEventListener('change', function() {
 });
 
 function handleFiles(files) {
-    if (files.length === 0) return;
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) formData.append('files[]', files[i]);
-
+    if (!files.length) return;
+    const fd = new FormData();
+    for (let i = 0; i < files.length; i++) fd.append('files[]', files[i]);
     uploadMsg.className = 'status-msg';
     uploadMsg.textContent = 'Загрузка...';
     uploadMsg.style.display = 'block';
-
     fetch('/api/upload.php', {
             method: 'POST',
-            body: formData
+            body: fd
         })
-        .then(r => r.json())
-        .then(data => {
-            if (data.error) {
+        .then(r => r.json()).then(d => {
+            if (d.error) {
                 uploadMsg.className = 'status-msg error';
-                uploadMsg.textContent = data.error;
+                uploadMsg.textContent = d.error;
             } else {
                 uploadMsg.className = 'status-msg success';
-                uploadMsg.textContent = '✅ Успешно загружено';
-                setTimeout(() => location.reload(), 1000);
+                uploadMsg.textContent = '✅ Успешно';
+                setTimeout(() => location.reload(), 800);
             }
-        })
-        .catch(e => {
+        }).catch(e => {
             uploadMsg.className = 'status-msg error';
             uploadMsg.textContent = e.message;
         });
 }
 
-// ================= DELETE FILE =================
+// ================= DELETE =================
 document.querySelectorAll('.btn-icon.delete').forEach(btn => {
     btn.addEventListener('click', function() {
-        const filename = this.dataset.file;
-        if (!confirm(`Удалить ${filename}?`)) return;
+        const f = this.dataset.file;
+        if (!confirm(`Удалить ${f}?`)) return;
         const fd = new FormData();
         fd.append('action', 'delete');
-        fd.append('file', filename);
+        fd.append('file', f);
         fetch('/api/files.php', {
-                method: 'POST',
-                body: fd
-            })
-            .then(r => r.json())
-            .then(d => d.success ? location.reload() : alert(d.error));
+            method: 'POST',
+            body: fd
+        }).then(r => r.json()).then(d => d.success ? location.reload() : alert(d.error));
     });
 });
 
@@ -106,364 +92,263 @@ document.querySelectorAll('.filename-text').forEach(el => {
     el.addEventListener('dblclick', function() {
         const span = this;
         const oldName = span.dataset.name;
-        const currentText = span.textContent;
-
-        // Создаем инпут
         const input = document.createElement('input');
         input.type = 'text';
-        input.value = currentText;
-        input.className = 'rename-input'; // Стилизуем как текст
-        input.style.cssText = "background:transparent; border:1px solid var(--primary); color:var(--text); font-size:1rem; padding:2px 5px; border-radius:4px; width:70%; font-family:inherit;";
+        input.value = oldName;
+        input.style.cssText = "background:rgba(139,92,246,0.1); border:1px solid var(--primary); color:var(--text); font-size:1rem; padding:2px 6px; border-radius:4px; width:80%; font-family:inherit; outline:none;";
 
-        // Заменяем span на input
         span.replaceWith(input);
         input.focus();
         input.select();
 
-        // Функция сохранения
-        const saveRename = () => {
+        const finishRename = () => {
             const newName = input.value.trim();
             if (newName && newName !== oldName) {
                 const fd = new FormData();
                 fd.append('action', 'rename');
                 fd.append('old_name', oldName);
                 fd.append('new_name', newName);
-
                 fetch('/api/files.php', {
-                        method: 'POST',
-                        body: fd
-                    })
-                    .then(r => r.json())
-                    .then(d => {
-                        if (d.success) location.reload();
-                        else {
-                            alert('Ошибка: ' + d.error);
-                            location.reload();
-                        }
-                    });
+                    method: 'POST',
+                    body: fd
+                }).then(r => r.json()).then(d => {
+                    if (d.success) location.reload();
+                    else {
+                        alert(d.error);
+                        location.reload();
+                    }
+                });
             } else {
-                // Если не изменили или пусто - отмена
                 input.replaceWith(span);
             }
         };
 
-        // Слушатели событий
-        input.addEventListener('blur', saveRename);
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                input.blur(); // Trigger blur event
-            } else if (e.key === 'Escape') {
-                input.value = currentText;
+        input.addEventListener('blur', finishRename);
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') input.blur();
+            if (e.key === 'Escape') {
+                input.value = oldName;
                 input.blur();
             }
         });
     });
 });
 
-// ================= EDITOR (CodeMirror) =================
+// ================= EDITOR =================
 let editor = null;
-const editorModal = document.getElementById('editorModal');
-const editorTitle = document.getElementById('editorTitle');
-const closeModal = document.getElementById('closeModal');
-const cancelEdit = document.getElementById('cancelEdit');
-const saveEdit = document.getElementById('saveEdit');
-let currentEditFile = null;
+const edModal = document.getElementById('editorModal');
+const edTitle = document.getElementById('editorTitle');
+const closeEd = document.getElementById('closeModal');
+const cancelEd = document.getElementById('cancelEdit');
+const saveEd = document.getElementById('saveEdit');
+let curFile = null;
 
-document.querySelectorAll('.btn-icon.edit').forEach(btn => {
-    btn.addEventListener('click', function() {
-        openEditor(this.dataset.file);
-    });
-});
+document.querySelectorAll('.btn-icon.edit').forEach(btn => btn.addEventListener('click', function() {
+    openEditor(this.dataset.file);
+}));
 
-function openEditor(filename) {
-    currentEditFile = filename;
-    editorTitle.textContent = 'Редактирование: ' + filename;
-    editorModal.classList.add('active');
-
-    fetch(`/api/files.php?action=edit&file=${encodeURIComponent(filename)}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.error) {
-                alert('Ошибка: ' + data.error);
-                editorModal.classList.remove('active');
+function openEditor(fn) {
+    curFile = fn;
+    edTitle.textContent = 'Редактирование: ' + fn;
+    edModal.classList.add('active');
+    fetch(`/api/files.php?action=edit&file=${encodeURIComponent(fn)}`)
+        .then(r => r.json()).then(d => {
+            if (d.error) {
+                alert(d.error);
+                edModal.classList.remove('active');
                 return;
             }
-
-            const ext = filename.split('.').pop().toLowerCase();
+            const ext = fn.split('.').pop().toLowerCase();
             const modes = {
-                'html': 'htmlmixed',
-                'htm': 'htmlmixed',
-                'css': 'css',
-                'js': 'javascript',
-                'json': 'javascript',
-                'php': 'php',
-                'xml': 'xml',
-                'svg': 'xml',
-                'txt': 'text'
+                html: 'htmlmixed',
+                htm: 'htmlmixed',
+                css: 'css',
+                js: 'javascript',
+                json: 'javascript',
+                php: 'php',
+                xml: 'xml',
+                svg: 'xml',
+                txt: 'text'
             };
-            const mode = modes[ext] || 'text';
-
-            if (!editor) {
-                editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
-                    mode: mode,
-                    theme: 'dracula',
-                    lineNumbers: true,
-                    autoCloseTags: true,
-                    matchBrackets: true,
-                    lineWrapping: true
-                });
-            } else {
-                editor.setOption('mode', mode);
-            }
-
-            editor.setValue(data.content);
-            setTimeout(() => editor.refresh(), 100);
-        })
-        .catch(e => {
-            alert('Ошибка сети: ' + e.message);
-            editorModal.classList.remove('active');
+            if (!editor) editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+                mode: modes[ext] || 'text',
+                theme: 'dracula',
+                lineNumbers: true,
+                autoCloseTags: true,
+                matchBrackets: true,
+                lineWrapping: true
+            });
+            else editor.setOption('mode', modes[ext] || 'text');
+            editor.setValue(d.content);
+            setTimeout(() => editor.refresh(), 50);
+        }).catch(e => {
+            alert(e.message);
+            edModal.classList.remove('active');
         });
 }
 
-closeModal.addEventListener('click', () => editorModal.classList.remove('active'));
-cancelEdit.addEventListener('click', () => editorModal.classList.remove('active'));
-editorModal.addEventListener('click', (e) => {
-    if (e.target === editorModal) editorModal.classList.remove('active');
-});
+closeEd.onclick = cancelEd.onclick = () => edModal.classList.remove('active');
+edModal.onclick = e => {
+    if (e.target === edModal) edModal.classList.remove('active');
+};
 
-saveEdit.addEventListener('click', () => {
-    if (!editor || !currentEditFile) return;
-
-    const content = editor.getValue();
-    const formData = new FormData();
-    formData.append('action', 'save');
-    formData.append('file', currentEditFile);
-    formData.append('content', content);
-
-    saveEdit.disabled = true;
-    saveEdit.textContent = 'Сохранение...';
-
+saveEd.onclick = () => {
+    if (!editor || !curFile) return;
+    const fd = new FormData();
+    fd.append('action', 'save');
+    fd.append('file', curFile);
+    fd.append('content', editor.getValue());
+    saveEd.disabled = true;
+    saveEd.textContent = 'Сохранение...';
     fetch('/api/files.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                editorModal.classList.remove('active');
-                setTimeout(() => location.reload(), 500);
-            } else {
-                alert('Ошибка: ' + data.error);
-                saveEdit.disabled = false;
-                saveEdit.textContent = 'Save';
-            }
-        })
-        .catch(e => {
-            alert('Ошибка сети: ' + e.message);
-            saveEdit.disabled = false;
-            saveEdit.textContent = 'Save';
-        });
-});
+        method: 'POST',
+        body: fd
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            edModal.classList.remove('active');
+            setTimeout(() => location.reload(), 300);
+        } else {
+            alert(d.error);
+            saveEd.disabled = false;
+            saveEd.textContent = 'Save';
+        }
+    });
+};
 
 // ================= SHORTENER =================
-const btnCreateLink = document.getElementById('btnCreateLink');
-if (btnCreateLink) {
-    btnCreateLink.addEventListener('click', () => {
-        const longUrl = document.getElementById('shortLongUrl').value;
-        if (!longUrl) return alert('Введите URL');
-
-        const fd = new FormData();
-        fd.append('action', 'create');
-        fd.append('long_url', longUrl);
-
-        fetch('/api/shorten.php', {
-                method: 'POST',
-                body: fd
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.error) {
-                    alert('Ошибка: ' + data.error);
-                } else {
-                    document.getElementById('shortLinkOut').href = data.short_url;
-                    document.getElementById('shortLinkOut').textContent = data.short_url;
-                    document.getElementById('shortResult').style.display = 'block';
-                    loadUrls();
-                }
-            })
-            .catch(e => alert('Ошибка сети: ' + e.message));
+const btnLink = document.getElementById('btnCreateLink');
+if (btnLink) btnLink.addEventListener('click', () => {
+    const url = document.getElementById('shortLongUrl').value;
+    if (!url) return alert('Введите URL');
+    const fd = new FormData();
+    fd.append('action', 'create');
+    fd.append('long_url', url);
+    fetch('/api/shorten.php', {
+        method: 'POST',
+        body: fd
+    }).then(r => r.json()).then(d => {
+        if (d.error) alert(d.error);
+        else {
+            document.getElementById('shortLinkOut').href = d.short_url;
+            document.getElementById('shortLinkOut').textContent = d.short_url;
+            document.getElementById('shortResult').style.display = 'block';
+            loadUrls();
+        }
     });
-}
+});
 
 function loadUrls() {
     const list = document.getElementById('urlsList');
     if (!list) return;
-
-    fetch('/api/shorten.php?action=list')
-        .then(r => r.json())
-        .then(data => {
-            if (data.urls.length === 0) {
-                list.innerHTML = '<div class="empty-msg">Нет ссылок</div>';
-                return;
-            }
-
-            let html = '';
-            data.urls.forEach(u => {
-                html += `
-                <div class="file-item" style="justify-content:space-between;">
-                    <div>
-                        <a href="${u.short_url}" target="_blank" style="color:var(--primary); font-weight:600; display:block; margin-bottom:5px;">${u.short_url}</a>
-                        <small style="color:var(--muted)">${u.long_url}</small>
-                    </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <span style="color:var(--muted)">${u.clicks} переходов</span>
-                        <button class="btn-icon delete" onclick="deleteShortUrl(${u.id})" title="Удалить">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+    fetch('/api/shorten.php?action=list').then(r => r.json()).then(d => {
+        if (!d.urls.length) {
+            list.innerHTML = '<div class="empty-msg">Нет ссылок</div>';
+            return;
+        }
+        list.innerHTML = d.urls.map(u => `
+            <div class="file-item" style="justify-content:space-between;">
+                <div><a href="${u.short_url}" target="_blank" style="color:var(--primary);font-weight:600;display:block;margin-bottom:4px;">${u.short_url}</a><small style="color:var(--muted)">${u.long_url}</small></div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <span style="color:var(--muted)">${u.clicks} переходов</span>
+                    <button class="btn-icon delete" onclick="delUrl(${u.id})"><i class="fas fa-trash"></i></button>
                 </div>
-            `;
-            });
-            list.innerHTML = html;
-        })
-        .catch(e => {
-            list.innerHTML = '<div class="empty-msg" style="color:var(--danger)">Ошибка загрузки</div>';
-        });
+            </div>`).join('');
+    });
 }
-
-window.deleteShortUrl = function(id) {
-    if (!confirm('Удалить ссылку?')) return;
-
+window.delUrl = id => {
+    if (!confirm('Удалить?')) return;
     const fd = new FormData();
     fd.append('action', 'delete');
     fd.append('id', id);
-
     fetch('/api/shorten.php', {
-            method: 'POST',
-            body: fd
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) loadUrls();
-            else alert('Ошибка: ' + data.error);
-        });
+        method: 'POST',
+        body: fd
+    }).then(r => r.json()).then(d => d.success ? loadUrls() : alert(d.error));
 };
 
 // ================= SETTINGS =================
-const avatarInput = document.getElementById('avatarInput');
-if (avatarInput) {
-    avatarInput.addEventListener('change', function() {
-        const fd = new FormData();
-        fd.append('avatar', this.files[0]);
-        fd.append('action', 'upload_avatar');
-
-        const msg = document.getElementById('avatarMsg');
-        msg.style.display = 'block';
-        msg.textContent = 'Загрузка...';
-        msg.className = 'status-msg';
-
-        fetch('/api/profile.php', {
-                method: 'POST',
-                body: fd
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    msg.className = 'status-msg success';
-                    msg.textContent = '✅ Аватар загружен';
-                    document.getElementById('settingsAvatar').src = 'https://reg.iamdaemon.tech/avatars/' + data.avatar + '?t=' + Date.now();
-                } else {
-                    msg.className = 'status-msg error';
-                    msg.textContent = data.error;
-                }
-            })
-            .catch(e => {
-                msg.className = 'status-msg error';
-                msg.textContent = 'Ошибка сети';
-            });
+const avIn = document.getElementById('avatarInput');
+if (avIn) avIn.addEventListener('change', function() {
+    const fd = new FormData();
+    fd.append('avatar', this.files[0]);
+    fd.append('action', 'upload_avatar');
+    const msg = document.getElementById('avatarMsg');
+    msg.style.display = 'block';
+    msg.textContent = 'Загрузка...';
+    msg.className = 'status-msg';
+    fetch('/api/profile.php', {
+        method: 'POST',
+        body: fd
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            msg.className = 'status-msg success';
+            msg.textContent = '✅ Готово';
+            document.getElementById('settingsAvatar').src = 'https://reg.iamdaemon.tech/avatars/' + d.avatar + '?t=' + Date.now();
+        } else {
+            msg.className = 'status-msg error';
+            msg.textContent = d.error;
+        }
     });
-}
+});
 
-const btnChangePass = document.getElementById('btnChangePass');
-if (btnChangePass) {
-    btnChangePass.addEventListener('click', () => {
-        const fd = new FormData();
-        fd.append('action', 'change_password');
-        fd.append('current_password', document.getElementById('currPass').value);
-        fd.append('new_password', document.getElementById('newPass').value);
-
-        const msg = document.getElementById('passMsg');
-        msg.style.display = 'block';
-        msg.textContent = 'Сохранение...';
-        msg.className = 'status-msg';
-
-        fetch('/api/profile.php', {
-                method: 'POST',
-                body: fd
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    msg.className = 'status-msg success';
-                    msg.textContent = '✅ Пароль изменен';
-                    document.getElementById('currPass').value = '';
-                    document.getElementById('newPass').value = '';
-                } else {
-                    msg.className = 'status-msg error';
-                    msg.textContent = data.error;
-                }
-            });
+const btnPass = document.getElementById('btnChangePass');
+if (btnPass) btnPass.addEventListener('click', () => {
+    const fd = new FormData();
+    fd.append('action', 'change_password');
+    fd.append('current_password', document.getElementById('currPass').value);
+    fd.append('new_password', document.getElementById('newPass').value);
+    const msg = document.getElementById('passMsg');
+    msg.style.display = 'block';
+    msg.textContent = 'Сохранение...';
+    msg.className = 'status-msg';
+    fetch('/api/profile.php', {
+        method: 'POST',
+        body: fd
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            msg.className = 'status-msg success';
+            msg.textContent = '✅ Пароль изменен';
+            document.getElementById('currPass').value = '';
+            document.getElementById('newPass').value = '';
+        } else {
+            msg.className = 'status-msg error';
+            msg.textContent = d.error;
+        }
     });
-}
+});
 
-const btnRequestDelete = document.getElementById('btnRequestDelete');
-if (btnRequestDelete) {
-    btnRequestDelete.addEventListener('click', () => {
-        if (!confirm('Отправить код подтверждения на почту?')) return;
-
-        const fd = new FormData();
-        fd.append('action', 'request_delete_code');
-
-        fetch('/api/profile.php', {
-                method: 'POST',
-                body: fd
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('deleteStep2').style.display = 'block';
-                    const msg = document.getElementById('deleteMsg');
-                    msg.className = 'status-msg success';
-                    msg.textContent = '✅ Код отправлен на почту';
-                    msg.style.display = 'block';
-                } else {
-                    alert('Ошибка: ' + data.error);
-                }
-            });
+const btnDel = document.getElementById('btnRequestDelete');
+if (btnDel) btnDel.addEventListener('click', () => {
+    if (!confirm('Отправить код на почту?')) return;
+    fetch('/api/profile.php', {
+        method: 'POST',
+        body: new FormData().append('action', 'request_delete_code')
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            document.getElementById('deleteStep2').style.display = 'block';
+            const m = document.getElementById('deleteMsg');
+            m.className = 'status-msg success';
+            m.textContent = '✅ Код отправлен';
+            m.style.display = 'block';
+        } else alert(d.error);
     });
-}
+});
 
-const btnConfirmDelete = document.getElementById('btnConfirmDelete');
-if (btnConfirmDelete) {
-    btnConfirmDelete.addEventListener('click', () => {
-        const fd = new FormData();
-        fd.append('action', 'confirm_delete');
-        fd.append('code', document.getElementById('deleteCode').value);
-
-        fetch('/api/profile.php', {
-                method: 'POST',
-                body: fd
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = data.redirect || 'https://iamdaemon.tech';
-                } else {
-                    const msg = document.getElementById('deleteMsg');
-                    msg.className = 'status-msg error';
-                    msg.textContent = 'Ошибка: ' + data.error;
-                    msg.style.display = 'block';
-                }
-            });
+const btnConfDel = document.getElementById('btnConfirmDelete');
+if (btnConfDel) btnConfDel.addEventListener('click', () => {
+    const fd = new FormData();
+    fd.append('action', 'confirm_delete');
+    fd.append('code', document.getElementById('deleteCode').value);
+    fetch('/api/profile.php', {
+        method: 'POST',
+        body: fd
+    }).then(r => r.json()).then(d => {
+        if (d.success) window.location.href = d.redirect || 'https://iamdaemon.tech';
+        else {
+            const m = document.getElementById('deleteMsg');
+            m.className = 'status-msg error';
+            m.textContent = 'Ошибка: ' + d.error;
+            m.style.display = 'block';
+        }
     });
-}
+});
