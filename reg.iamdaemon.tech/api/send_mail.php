@@ -1,5 +1,4 @@
 <?php
-// Подключаем библиотеку из папки lib
 require __DIR__ . '/../lib/PHPMailer.php';
 require __DIR__ . '/../lib/SMTP.php';
 require __DIR__ . '/../lib/Exception.php';
@@ -8,32 +7,34 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-/**
- * Отправка письма через SMTP
- * @param string $to      Кому
- * @param string $subject Тема
- * @param string $body    Текст (HTML)
- * @return bool
- */
+// Загружаем переменные из .env
+function loadEnv($path) {
+    if (!file_exists($path)) return false;
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        list($key, $value) = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value);
+    }
+    return true;
+}
+loadEnv(__DIR__ . '/../.env');
+
 function sendEmail($to, $subject, $body) {
     $mail = new PHPMailer(true);
     
     try {
-        // === НАСТРОЙКИ SMTP (ЗАПОЛНИ СВОИМИ ДАННЫМИ) ===
         $mail->isSMTP();
-        $mail->Host       = 'smtp.mail.ru';          // Адрес SMTP сервера
+        $mail->Host       = $_ENV['SMTP_HOST'] ?? 'smtp.yandex.ru';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'social@iamdaemon.tech';   // Твоя почта
-        $mail->Password   = 'Egor200640012';               // Твой пароль (или App Password)
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // SSL
-        $mail->Port       = 465;                       // Порт (465 для SSL, 587 для TLS)
+        $mail->Username   = $_ENV['SMTP_USER'];
+        $mail->Password   = $_ENV['SMTP_PASS'];
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = $_ENV['SMTP_PORT'] ?? 465;
         $mail->CharSet    = 'UTF-8';
-
-        // От кого и кому
-        $mail->setFrom('social@iamdaemon.tech', 'Daemon Service');
+        
+        $mail->setFrom($_ENV['SMTP_USER'], 'Daemon Service');
         $mail->addAddress($to);
-
-        // Письмо
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $body;
@@ -41,9 +42,8 @@ function sendEmail($to, $subject, $body) {
         $mail->send();
         return true;
     } catch (Exception $e) {
-        // Если ошибка, пишем её в лог сервера
-        error_log("PHPMailer Error: {$mail->ErrorInfo}");
-        return false;
+        error_log("SMTP Error: " . $mail->ErrorInfo);
+        return $mail->ErrorInfo;
     }
 }
 ?>
