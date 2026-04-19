@@ -1,59 +1,71 @@
 <?php
+// Подключаем PHPMailer
 require __DIR__ . '/../lib/PHPMailer.php';
 require __DIR__ . '/../lib/SMTP.php';
 require __DIR__ . '/../lib/Exception.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-function loadEnv($path) {
-    if (!file_exists($path)) return false;
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value);
-    }
-    return true;
-}
-loadEnv(__DIR__ . '/../.env');
-
+/**
+ * Отправка письма через SMTP
+ * @return bool|string true при успехе, текст ошибки при неудаче
+ */
 function sendEmail($to, $subject, $body) {
+    // === Читаем .env ВРУЧНУЮ с правильным trim ===
+    $envPath = __DIR__ . '/../.env';
+    $env = [];
+    if (file_exists($envPath)) {
+        $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line) || $line[0] === '#') continue;
+            if (strpos($line, '=') !== false) {
+                list($key, $value) = explode('=', $line, 2);
+                // ВАЖНО: trim и ключа, и значения!
+                $env[trim($key)] = trim($value);
+            }
+        }
+    }
+
     $mail = new PHPMailer(true);
     
     try {
         $mail->isSMTP();
-        $mail->Host       = $_ENV['SMTP_HOST'] ?? 'smtp.mail.ru';
+        $mail->Host       = $env['SMTP_HOST'] ?? 'smtp.mail.ru';
         $mail->SMTPAuth   = true;
-        $mail->Username   = trim($_ENV['SMTP_USER']); // Убираем пробелы
-        $mail->Password   = trim($_ENV['SMTP_PASS']); // Убираем пробелы
+        // ВАЖНО: trim убирает скрытые пробелы/символы
+        $mail->Username   = trim($env['SMTP_USER'] ?? '');
+        $mail->Password   = trim($env['SMTP_PASS'] ?? '');
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = $_ENV['SMTP_PORT'] ?? 465;
+        $mail->Port       = (int)($env['SMTP_PORT'] ?? 465);
         $mail->CharSet    = 'UTF-8';
         $mail->Timeout    = 30;
         
-        // === ВАЖНО: Принудительно используем PLAIN ===
+        // Принудительно используем PLAIN (как в curl)
         $mail->SMTPAutoTLS = false;
         $mail->AuthType = 'PLAIN';
         
-        // Отладка (включи для теста)
-        $mail->SMTPDebug = 2; // Поставь 2 чтобы видеть логи
+        // Отладка (поставь 2 для логов, 0 для продакшена)
+        $mail->SMTPDebug = 0;
         $mail->Debugoutput = 'error_log';
         
-        $mail->setFrom(trim($_ENV['SMTP_USER']), 'Daemon Service');
+        $mail->setFrom($mail->Username, 'Daemon Service');
         $mail->addAddress($to);
         
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $body;
         
-        if (!$mail->send()) {
-            return "Ошибка отправки: " . $mail->ErrorInfo;
+        // Отправляем
+        if ($mail->send()) {
+            return true;
+        } else {
+            return "SMTP send failed: " . $mail->ErrorInfo;
         }
         
-        return true;
     } catch (Exception $e) {
+        // Возвращаем точную ошибку
         return "PHPMailer Exception: " . $e->getMessage();
     }
 }

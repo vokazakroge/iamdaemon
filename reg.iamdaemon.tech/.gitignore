@@ -10,4 +10,3 @@ data/sessions/
 node_modules/
 vendor/
 composer.lock
-.env
