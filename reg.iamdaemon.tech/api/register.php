@@ -49,14 +49,17 @@ try {
     $subject = "Твой код доступа к DAEMON";
     $htmlBody = "<h2>Привет, {$username}!</h2><p>Код подтверждения: <b style='font-size:28px;letter-spacing:4px;'>{$code}</b></p>";
     
+    error_log("Отправка письма на: $email");
     $mailResult = sendEmail($email, $subject, $htmlBody);
     
     if ($mailResult === true) {
+        error_log("Письмо успешно отправлено");
         echo json_encode(['success' => true, 'message' => 'Код отправлен на почту']);
     } else {
-        // Возвращаем точную ошибку SMTP на фронтенд
+        error_log("Ошибка отправки письма: $mailResult");
+        // Не удаляем пользователя, даём шанс resend
         http_response_code(500);
-        echo json_encode(['error' => 'SMTP ошибка: ' . $mailResult]);
+        echo json_encode(['error' => 'Не удалось отправить письмо: ' . $mailResult]);
     }
 
 } catch (Exception $e) {

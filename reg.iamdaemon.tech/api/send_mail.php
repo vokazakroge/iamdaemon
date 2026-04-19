@@ -7,7 +7,6 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-// Загружаем переменные из .env
 function loadEnv($path) {
     if (!file_exists($path)) return false;
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -25,25 +24,34 @@ function sendEmail($to, $subject, $body) {
     
     try {
         $mail->isSMTP();
-        $mail->Host       = $_ENV['SMTP_HOST'] ?? 'smtp.yandex.ru';
+        $mail->Host       = $_ENV['SMTP_HOST'] ?? 'smtp.mail.ru';
         $mail->SMTPAuth   = true;
         $mail->Username   = $_ENV['SMTP_USER'];
         $mail->Password   = $_ENV['SMTP_PASS'];
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = $_ENV['SMTP_PORT'] ?? 465;
         $mail->CharSet    = 'UTF-8';
+        $mail->Timeout    = 30;
+        
+        // Отладочная информация
+        $mail->SMTPDebug = 0; // 2 для включения отладки
+        $mail->Debugoutput = 'error_log';
         
         $mail->setFrom($_ENV['SMTP_USER'], 'Daemon Service');
         $mail->addAddress($to);
+        
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $body;
         
-        $mail->send();
+        // Пробуем отправить
+        if (!$mail->send()) {
+            return "Ошибка отправки: " . $mail->ErrorInfo;
+        }
+        
         return true;
     } catch (Exception $e) {
-        error_log("SMTP Error: " . $mail->ErrorInfo);
-        return $mail->ErrorInfo;
+        return "PHPMailer Exception: " . $e->getMessage();
     }
 }
 ?>
