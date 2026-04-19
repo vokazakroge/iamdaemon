@@ -18,8 +18,8 @@ if (!$oldName || !$newName) {
     exit;
 }
 
-// Базовая валидация
-if (!preg_match('/^[a-z0-9\.\-_]+$/i', $oldName) || !preg_match('/^[a-z0-9\.\-_]+$/i', $newName)) {
+// Валидация: только буквы, цифры, точка, дефис, подчёркивание
+if (!preg_match('/^[a-z0-9.\-_]+$/i', $oldName) || !preg_match('/^[a-z0-9.\-_]+$/i', $newName)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid filename format']);
     exit;
@@ -29,21 +29,21 @@ $userDir = '/var/www/users/' . $_SESSION['username'];
 $oldPath = realpath("$userDir/$oldName");
 $newPath = "$userDir/$newName";
 
-// Проверка безопасности
+// Проверка пути и существования
 if ($oldPath === false || strpos($oldPath, $userDir) !== 0 || !is_file($oldPath)) {
     http_response_code(404);
     echo json_encode(['error' => 'File not found']);
     exit;
 }
 
-// Если файл с новым именем уже существует
+// Проверка на дубликат
 if (file_exists($newPath)) {
     http_response_code(409);
     echo json_encode(['error' => 'File with this name already exists']);
     exit;
 }
 
-// Переименовываем
+// Переименование
 if (rename($oldPath, $newPath)) {
     chmod($newPath, 0644);
     echo json_encode(['success' => true, 'new_name' => $newName]);
