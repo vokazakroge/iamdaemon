@@ -1,5 +1,19 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
+$stmt = $db->prepare('SELECT id, status FROM users WHERE username = :u');
+$stmt->bindValue(':u', $username, SQLITE3_TEXT);
+$existingUser = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+
+if ($existingUser) {
+    if ($existingUser['status'] === 'banned') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Это имя заблокировано']);
+    } else {
+        http_response_code(409);
+        echo json_encode(['error' => 'Ник уже занят']);
+    }
+    exit;
+}
 
 try {
     require_once __DIR__ . '/../config.php';
