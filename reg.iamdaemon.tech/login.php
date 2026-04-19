@@ -1,22 +1,21 @@
 <?php
 require_once __DIR__ . '/config.php';
+// Проверка статуса
+$stmt = $db->prepare('SELECT status FROM users WHERE username = :u');
+$stmt->bindValue(':u', $username, SQLITE3_TEXT);
+$userCheck = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 
+if ($userCheck && $userCheck['status'] === 'banned') {
+    $error = 'Ваш аккаунт заблокирован';
+} else {
+    // Успешный вход
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['username'] = $username;
+    header('Location: https://' . $username . '.iamdaemon.tech/dashboard');
+    exit;
+}
 // Если уже залогинен -> перекидываем на его поддомен
 if (isLoggedIn()) {
-    // Проверка статуса
-    $stmt = $db->prepare('SELECT status FROM users WHERE username = :u');
-    $stmt->bindValue(':u', $username, SQLITE3_TEXT);
-    $userCheck = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
-
-    if ($userCheck && $userCheck['status'] === 'banned') {
-        $error = 'Ваш аккаунт заблокирован';
-    } else {
-        // Успешный вход
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $username;
-        header('Location: https://' . $username . '.iamdaemon.tech/dashboard');
-        exit;
-    }
     header('Location: https://' . $_SESSION['username'] . '.iamdaemon.tech');
     exit;
 }
