@@ -1,0 +1,10 @@
+Options -Indexes
+
+<FilesMatch "^(\.env|.*\.db|.*\.sqlite|.*\.sqlite3)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(data|lib)/ - [F,L]
+</IfModule>

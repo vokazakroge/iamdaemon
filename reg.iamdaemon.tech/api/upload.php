@@ -9,52 +9,69 @@ if (!isLoggedIn()) {
 }
 
 $username = $_SESSION['username'];
-$uploadDir = "/var/www/users/$username/";
+$uploadDir = getUserDir($username) . '/';
 if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
-$allowedExt = ['html','htm','css','js','json','txt','xml','png','jpg','jpeg','gif','svg','ico','pdf','md','zip'];
+$allowedExt = getAllowedUploadExtensions();
 $maxSize = 20 * 1024 * 1024; // 20MB
 
-if (!isset($_FILES['file'])) {
+$uploads = [];
+if (isset($_FILES['file'])) {
+    $uploads[] = $_FILES['file'];
+} elseif (isset($_FILES['files'])) {
+    foreach ($_FILES['files']['name'] as $i => $name) {
+        $uploads[] = [
+            'name' => $name,
+            'type' => $_FILES['files']['type'][$i],
+            'tmp_name' => $_FILES['files']['tmp_name'][$i],
+            'error' => $_FILES['files']['error'][$i],
+            'size' => $_FILES['files']['size'][$i],
+        ];
+    }
+}
+
+if (!$uploads) {
     http_response_code(400);
     echo json_encode(['error' => 'No file uploaded']);
     exit;
 }
 
-$file = $_FILES['file'];
-$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-$filename = basename($file['name']);
+foreach ($uploads as $file) {
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $filename = basename($file['name']);
 
-if ($file['error'] !== UPLOAD_ERR_OK) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Upload error code: ' . $file['error']]);
-    exit;
-}
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Upload error code: ' . $file['error']]);
+        exit;
+    }
 
-if ($file['size'] > $maxSize) {
-    http_response_code(400);
-    echo json_encode(['error' => 'File too large (max 20MB)']);
-    exit;
-}
+    if ($file['size'] > $maxSize) {
+        http_response_code(400);
+        echo json_encode(['error' => "$filename is too large (max 20MB)"]);
+        exit;
+    }
 
-if (!in_array($ext, $allowedExt)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Extension not allowed']);
-    exit;
-}
+    if (!in_array($ext, $allowedExt, true)) {
+        http_response_code(400);
+        echo json_encode(['error' => "$filename extension is not allowed"]);
+        exit;
+    }
 
-if (preg_match('/\.\./i', $filename) || !preg_match('/^[a-z0-9\.\-_]+$/i', $filename)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid filename']);
-    exit;
-}
+    if (!isSafeFilename($filename)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid filename']);
+        exit;
+    }
 
-$target = $uploadDir . $filename;
-if (move_uploaded_file($file['tmp_name'], $target)) {
+    $target = $uploadDir . $filename;
+    if (!move_uploaded_file($file['tmp_name'], $target)) {
+        http_response_code(500);
+        echo json_encode(['error' => "Failed to save $filename"]);
+        exit;
+    }
     chmod($target, 0644);
-    echo json_encode(['success' => true, 'filename' => $filename]);
-} else {
-    http_response_code(500);
-    echo json_encode(['error' => 'Failed to save file']);
 }
+
+echo json_encode(['success' => true, 'count' => count($uploads)]);
 ?>

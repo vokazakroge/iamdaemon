@@ -18,13 +18,13 @@ if (!$oldName || !$newName) {
     exit;
 }
 
-if (!preg_match('/^[a-z0-9\.\-_]+$/i', $oldName) || !preg_match('/^[a-z0-9\.\-_]+$/i', $newName)) {
+if (!isSafeFilename($oldName) || !isSafeFilename($newName)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid filename']);
     exit;
 }
 
-$userDir = '/var/www/users/' . $_SESSION['username'];
+$userDir = getUserDir($_SESSION['username']);
 $oldPath = realpath("$userDir/$oldName");
 $newPath = "$userDir/$newName";
 

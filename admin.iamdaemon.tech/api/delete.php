@@ -1,5 +1,5 @@
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 
@@ -22,7 +22,7 @@ try {
 
     file_put_contents($log_file, "Input: user=$username, id=$userId\n", FILE_APPEND);
 
-    if (!$username || !$userId) {
+    if (!$username || !$userId || !preg_match('/^[a-z0-9-]{3,20}$/', $username)) {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid input']);
         exit;

@@ -9,9 +9,7 @@ $stmt->bindValue(':u', $_SESSION['username'], SQLITE3_TEXT);
 $user = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 
 // Формируем ссылку на аватар (с временем, чтобы кэш не мешал)
-$avatarUrl = $user['avatar'] 
-    ? "https://{$_SESSION['username']}.iamdaemon.tech/{$user['avatar']}?t=" . time() 
-    : 'https://ui-avatars.com/api/?name=' . urlencode($_SESSION['username']) . '&background=8b5cf6&color=fff';
+$avatarUrl = getAvatarUrl($_SESSION['username'], $user['avatar'] ?? null);
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -193,7 +191,7 @@ $avatarUrl = $user['avatar']
                     msg.className = 'msg success';
                     msg.textContent = d.message;
                     // Обновляем картинку (добавляем timestamp чтобы не кэшировалось)
-                    document.getElementById('avatarPreview').src = `https://${'<?= $_SESSION['username'] ?>'}.iamdaemon.tech/${d.avatar}?t=${Date.now()}`;
+                    document.getElementById('avatarPreview').src = d.avatar_url + (d.avatar_url.includes('?') ? '&' : '?') + 't=' + Date.now();
                 } else {
                     msg.className = 'msg error';
                     msg.textContent = d.error;

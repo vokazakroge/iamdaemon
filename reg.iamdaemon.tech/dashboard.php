@@ -13,7 +13,7 @@ if (is_dir($userDir)) {
             $path = "$userDir/$file";
             $size = is_file($path) ? round(filesize($path) / 1024, 1) . ' KB' : 'DIR';
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-            $editable = in_array($ext, ['html', 'htm', 'css', 'js', 'json', 'txt', 'md', 'xml', 'svg', 'php']);
+            $editable = in_array($ext, getEditableExtensions(), true);
             $files[] = [
                 'name' => $file,
                 'size' => $size,
@@ -32,9 +32,7 @@ $db = getDb();
 $stmt = $db->prepare('SELECT username, email, avatar FROM users WHERE username = :u');
 $stmt->bindValue(':u', $username, SQLITE3_TEXT);
 $profile = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
-$avatarUrl = $profile['avatar'] 
-    ? "https://reg.iamdaemon.tech/avatars/{$profile['avatar']}" 
-    : 'https://ui-avatars.com/api/?name='.urlencode($username).'&background=8b5cf6&color=fff';
+$avatarUrl = getAvatarUrl($username, $profile['avatar'] ?? null);
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -109,7 +107,7 @@ $avatarUrl = $profile['avatar']
                         <span class="file-icon">
                             <?php echo $f['is_dir'] ? '<i class="fas fa-folder"></i>' : '<i class="fas fa-file"></i>'; ?>
                         </span>
-                        <span class="filename-text"><?= htmlspecialchars($f['name']) ?></span>
+                        <span class="filename-text" data-name="<?= htmlspecialchars($f['name']) ?>"><?= htmlspecialchars($f['name']) ?></span>
                     </div>
                     <div class="file-actions">
                         <?php if (!$f['is_dir'] && $f['editable']): ?>
@@ -134,8 +132,8 @@ $avatarUrl = $profile['avatar']
             <div class="upload-zone" id="dropZone">
                 <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--primary); margin-bottom: 15px;"></i>
                 <p style="font-size: 1.2rem; margin-bottom: 10px;">Перетащи файлы сюда</p>
-                <small style="color: var(--muted);">html, css, js, png, jpg, svg, json, txt, zip, php (max 20 MB)</small><br>
-                <input type="file" id="fileInput" class="hidden" multiple accept=".html,.css,.js,.json,.txt,.xml,.png,.jpg,.jpeg,.gif,.svg,.ico,.pdf,.md,.zip,.php">
+                <small style="color: var(--muted);">html, css, js, png, jpg, svg, json, txt, zip (max 20 MB)</small><br>
+                <input type="file" id="fileInput" class="hidden" multiple accept=".html,.css,.js,.json,.txt,.xml,.png,.jpg,.jpeg,.gif,.svg,.ico,.pdf,.md,.zip">
                 <button class="btn-primary" onclick="document.getElementById('fileInput').click()" style="margin-top: 20px;">
                     <i class="fas fa-upload"></i> Выбрать файлы
                 </button>

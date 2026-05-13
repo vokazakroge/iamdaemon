@@ -76,14 +76,23 @@ try {
         if (!isset($_FILES['avatar'])) throw new Exception("Нет файла");
 
         $file = $_FILES['avatar'];
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $allowedTypes = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif'
+        ];
         $maxSize = 2 * 1024 * 1024; // 2MB
 
-        if (!in_array($file['type'], $allowedTypes)) throw new Exception("Только картинки (JPG, PNG, WEBP)");
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) throw new Exception("Ошибка загрузки файла");
         if ($file['size'] > $maxSize) throw new Exception("Файл слишком большой (макс 2MB)");
 
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file['tmp_name']);
+        if (!isset($allowedTypes[$mime])) throw new Exception("Только картинки (JPG, PNG, WEBP, GIF)");
+
         // Генерируем имя файла: username.ext
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $ext = $allowedTypes[$mime];
         $filename = $currentUser . '.' . $ext;
         
         // ПУТЬ ИЗМЕНИЛИ: теперь в папке avatars, а не в users
@@ -111,7 +120,12 @@ try {
         $stmt->bindValue(':u', $currentUser, SQLITE3_TEXT);
         $stmt->execute();
 
-        echo json_encode(['success' => true, 'message' => 'Аватарка обновлена', 'avatar' => $filename]);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Аватарка обновлена',
+            'avatar' => $filename,
+            'avatar_url' => getAvatarUrl($currentUser, $filename)
+        ]);
     }
 
     // === 4. ЗАПРОС КОДА ДЛЯ УДАЛЕНИЯ ===

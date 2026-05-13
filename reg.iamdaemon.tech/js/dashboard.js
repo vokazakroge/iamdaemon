@@ -212,6 +212,10 @@ saveEd.onclick = () => {
             saveEd.disabled = false;
             saveEd.textContent = 'Save';
         }
+    }).catch(e => {
+        alert(e.message);
+        saveEd.disabled = false;
+        saveEd.textContent = 'Save';
     });
 };
 
@@ -283,7 +287,8 @@ if (avIn) avIn.addEventListener('change', function() {
         if (d.success) {
             msg.className = 'status-msg success';
             msg.textContent = '✅ Готово';
-            document.getElementById('settingsAvatar').src = 'https://reg.iamdaemon.tech/avatars/' + d.avatar + '?t=' + Date.now();
+            const avatarUrl = d.avatar_url || ('https://reg.iamdaemon.tech/avatar.php?u=' + encodeURIComponent(window.location.hostname.split('.')[0]));
+            document.getElementById('settingsAvatar').src = avatarUrl + (avatarUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
         } else {
             msg.className = 'status-msg error';
             msg.textContent = d.error;
@@ -320,9 +325,11 @@ if (btnPass) btnPass.addEventListener('click', () => {
 const btnDel = document.getElementById('btnRequestDelete');
 if (btnDel) btnDel.addEventListener('click', () => {
     if (!confirm('Отправить код на почту?')) return;
+    const fd = new FormData();
+    fd.append('action', 'request_delete_code');
     fetch('/api/profile.php', {
         method: 'POST',
-        body: new FormData().append('action', 'request_delete_code')
+        body: fd
     }).then(r => r.json()).then(d => {
         if (d.success) {
             document.getElementById('deleteStep2').style.display = 'block';

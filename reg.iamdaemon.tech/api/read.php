@@ -9,13 +9,13 @@ if (!isLoggedIn()) {
 }
 
 $filename = $_GET['file'] ?? '';
-if (!$filename || !preg_match('/^[a-z0-9\.\-_]+$/i', $filename)) {
+if (!isSafeFilename($filename)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid filename']);
     exit;
 }
 
-$userDir = '/var/www/users/' . $_SESSION['username'];
+$userDir = getUserDir($_SESSION['username']);
 $target = realpath("$userDir/$filename");
 
 if ($target === false || strpos($target, $userDir) !== 0 || !is_file($target)) {
@@ -25,8 +25,7 @@ if ($target === false || strpos($target, $userDir) !== 0 || !is_file($target)) {
 }
 
 $ext = strtolower(pathinfo($target, PATHINFO_EXTENSION));
-$allowed = ['html','htm','css','js','json','txt','xml','md','svg'];
-if (!in_array($ext, $allowed)) {
+if (!in_array($ext, getEditableExtensions(), true)) {
     http_response_code(400);
     echo json_encode(['error' => 'Cannot edit this file type']);
     exit;

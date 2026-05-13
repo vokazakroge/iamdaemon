@@ -1,6 +1,6 @@
 <?php
 error_reporting(E_ALL);
-ini_set('display_errors', 1); // Показываем ошибки пока
+ini_set('display_errors', 0);
 header('Content-Type: application/json; charset=utf-8');
 
 try {
@@ -40,7 +40,9 @@ try {
                 echo json_encode(['error' => 'Этот ник уже занят кем-то другим']);
             } else {
                 // Если ник занят, но не подтвержден — УДАЛЯЕМ и регистрируем заново
-                $db->exec("DELETE FROM users WHERE username = '$username'");
+                $deleteStmt = $db->prepare('DELETE FROM users WHERE username = :u');
+                $deleteStmt->bindValue(':u', $username, SQLITE3_TEXT);
+                $deleteStmt->execute();
             }
         } else {
             // Если занят Email (даже если ник другой)

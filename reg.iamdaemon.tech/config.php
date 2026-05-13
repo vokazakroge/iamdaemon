@@ -72,6 +72,40 @@ function requireAdmin() {
     }
 }
 
+function getUserDir($username) {
+    return '/var/www/users/' . $username;
+}
+
+function isSafeUsername($username) {
+    return is_string($username) && preg_match('/^[a-z0-9-]{3,20}$/', $username);
+}
+
+function isSafeFilename($filename) {
+    return is_string($filename)
+        && $filename !== ''
+        && $filename !== '.htaccess'
+        && !preg_match('/(^|[\/\\\\])\.\.([\/\\\\]|$)/', $filename)
+        && preg_match('/^[a-z0-9][a-z0-9._-]*$/i', $filename);
+}
+
+function getAllowedUploadExtensions() {
+    return ['html','htm','css','js','json','txt','xml','png','jpg','jpeg','gif','svg','ico','pdf','md','zip'];
+}
+
+function getEditableExtensions() {
+    return ['html','htm','css','js','json','txt','md','xml','svg'];
+}
+
+function getAvatarUrl($username, $avatar = null) {
+    if ($avatar && isSafeUsername($username) && isSafeFilename($avatar)) {
+        $path = __DIR__ . '/avatars/' . $avatar;
+        $version = is_file($path) ? filemtime($path) : time();
+        return 'https://reg.iamdaemon.tech/avatar.php?u=' . rawurlencode($username) . '&v=' . $version;
+    }
+
+    return 'https://ui-avatars.com/api/?name=' . urlencode($username) . '&background=8b5cf6&color=fff';
+}
+
 // === ПРОВЕРКА СТАТУСА ПОЛЬЗОВАТЕЛЯ (БАН) ===
 function checkUserStatus() {
     if (!isLoggedIn()) return;

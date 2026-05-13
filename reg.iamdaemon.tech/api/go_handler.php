@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../config.php';
 
 // 1. Получаем данные из Nginx или парсим вручную
-$shortCode = $_SERVER['SHORT_CODE'] ?? '';
+$shortCode = $_SERVER['SHORT_CODE'] ?? ($_GET['code'] ?? '');
 $subdomain = $_SERVER['SUBDOMAIN'] ?? '';
 
 if (!$shortCode || !$subdomain) {
@@ -20,6 +20,11 @@ if (!$shortCode || !$subdomain) {
     exit("Bad Request");
 }
 
+if (!preg_match('/^[a-zA-Z0-9_-]+$/', $shortCode) || !isSafeUsername($subdomain)) {
+    http_response_code(400);
+    exit("Bad Request");
+}
+
 $db = getDb();
 
 // 2. Ищем ссылку
@@ -30,7 +35,9 @@ $row = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
 
 if ($row) {
     // 3. Считаем клик
-    $db->exec("UPDATE short_urls SET clicks = clicks + 1 WHERE short_code = '$shortCode'");
+    $stmt = $db->prepare('UPDATE short_urls SET clicks = clicks + 1 WHERE short_code = :code');
+    $stmt->bindValue(':code', $shortCode, SQLITE3_TEXT);
+    $stmt->execute();
     
     // 4. Редирект
     header("Location: " . $row['long_url'], true, 302);

@@ -11,13 +11,13 @@ if (!isLoggedIn()) {
 $input = json_decode(file_get_contents('php://input'), true);
 $filename = $input['file'] ?? '';
 
-if (!$filename || !preg_match('/^[a-z0-9\.\-_]+$/i', $filename)) {
+if (!isSafeFilename($filename)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid filename']);
     exit;
 }
 
-$userDir = '/var/www/users/' . $_SESSION['username'];
+$userDir = getUserDir($_SESSION['username']);
 $target = realpath("$userDir/$filename");
 
 if ($target === false || strpos($target, $userDir) !== 0 || !is_file($target)) {

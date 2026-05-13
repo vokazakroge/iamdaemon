@@ -8,6 +8,40 @@ $db = getDb();
 $username = $_SESSION['username'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
+function ensureShortLinkRoute($username, $shortCode) {
+    if (!isSafeUsername($username) || !preg_match('/^[a-f0-9]{6}$/', $shortCode)) {
+        throw new Exception("Invalid short link route");
+    }
+
+    $goDir = getUserDir($username) . '/go/' . $shortCode;
+    if (!is_dir($goDir) && !mkdir($goDir, 0755, true)) {
+        throw new Exception("Не удалось создать маршрут короткой ссылки");
+    }
+
+    $handler = <<<'PHP'
+<?php
+$_SERVER['SHORT_CODE'] = basename(__DIR__);
+require '/var/www/reg.iamdaemon.tech/api/go_handler.php';
+?>
+PHP;
+
+    if (file_put_contents($goDir . '/index.php', $handler) === false) {
+        throw new Exception("Не удалось сохранить маршрут короткой ссылки");
+    }
+    chmod($goDir . '/index.php', 0644);
+}
+
+function removeShortLinkRoute($username, $shortCode) {
+    if (!isSafeUsername($username) || !preg_match('/^[a-f0-9]{6}$/', $shortCode)) {
+        return;
+    }
+
+    $goDir = getUserDir($username) . '/go/' . $shortCode;
+    $index = $goDir . '/index.php';
+    if (is_file($index)) unlink($index);
+    if (is_dir($goDir)) @rmdir($goDir);
+}
+
 // Создаем таблицу если нет
 $db->exec("CREATE TABLE IF NOT EXISTS short_urls (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,6 +99,8 @@ try {
         
         if (!$stmt->execute()) throw new Exception("Ошибка сохранения");
 
+        ensureShortLinkRoute($username, $shortCode);
+
         $shortUrl = "https://{$username}.iamdaemon.tech/go/{$shortCode}";
         
         echo json_encode([
@@ -90,6 +126,7 @@ try {
         
         $urls = [];
         while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            ensureShortLinkRoute($username, $row['short_code']);
             $urls[] = [
                 'id' => $row['id'],
                 'short_code' => $row['short_code'],
@@ -115,10 +152,17 @@ try {
         
         if (!$user) throw new Exception("Пользователь не найден");
 
-        $stmt = $db->prepare('DELETE FROM short_urls WHERE id = :id AND user_id = :uid');
+        $stmt = $db->prepare('SELECT short_code FROM short_urls WHERE id = :id AND user_id = :uid');
         $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
         $stmt->bindValue(':uid', $user['id'], SQLITE3_INTEGER);
-        $stmt->execute();
+        $url = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        if ($url) {
+            $stmt = $db->prepare('DELETE FROM short_urls WHERE id = :id AND user_id = :uid');
+            $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+            $stmt->bindValue(':uid', $user['id'], SQLITE3_INTEGER);
+            $stmt->execute();
+            removeShortLinkRoute($username, $url['short_code']);
+        }
 
         echo json_encode(['success' => true]);
         exit;
