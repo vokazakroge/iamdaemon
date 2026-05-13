@@ -18,17 +18,31 @@ function ensureShortLinkRoute($username, $shortCode) {
         throw new Exception("Не удалось создать маршрут короткой ссылки");
     }
 
-    $handler = <<<'PHP'
-<?php
-$_SERVER['SHORT_CODE'] = basename(__DIR__);
-require '/var/www/reg.iamdaemon.tech/api/go_handler.php';
-?>
-PHP;
+    $redirectUrl = 'https://reg.iamdaemon.tech/api/go_handler.php?u=' . rawurlencode($username) . '&code=' . rawurlencode($shortCode);
+    $escapedUrl = htmlspecialchars($redirectUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $handler = '<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex">
+    <meta http-equiv="refresh" content="0;url=' . $escapedUrl . '">
+    <title>Redirecting...</title>
+</head>
+<body>
+    <script>window.location.replace(' . json_encode($redirectUrl, JSON_UNESCAPED_SLASHES) . ');</script>
+    <a href="' . $escapedUrl . '">Continue</a>
+</body>
+</html>';
 
-    if (file_put_contents($goDir . '/index.php', $handler) === false) {
+    if (file_put_contents($goDir . '/index.html', $handler) === false) {
         throw new Exception("Не удалось сохранить маршрут короткой ссылки");
     }
-    chmod($goDir . '/index.php', 0644);
+    chmod($goDir . '/index.html', 0644);
+
+    $oldPhpRoute = $goDir . '/index.php';
+    if (is_file($oldPhpRoute)) {
+        unlink($oldPhpRoute);
+    }
 }
 
 function removeShortLinkRoute($username, $shortCode) {
@@ -37,8 +51,10 @@ function removeShortLinkRoute($username, $shortCode) {
     }
 
     $goDir = getUserDir($username) . '/go/' . $shortCode;
-    $index = $goDir . '/index.php';
-    if (is_file($index)) unlink($index);
+    foreach (['index.html', 'index.php'] as $indexFile) {
+        $index = $goDir . '/' . $indexFile;
+        if (is_file($index)) unlink($index);
+    }
     if (is_dir($goDir)) @rmdir($goDir);
 }
 

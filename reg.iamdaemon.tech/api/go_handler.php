@@ -3,7 +3,7 @@ require_once __DIR__ . '/../config.php';
 
 // 1. Получаем данные из Nginx или парсим вручную
 $shortCode = $_SERVER['SHORT_CODE'] ?? ($_GET['code'] ?? '');
-$subdomain = $_SERVER['SUBDOMAIN'] ?? '';
+$subdomain = $_SERVER['SUBDOMAIN'] ?? ($_GET['u'] ?? '');
 
 if (!$shortCode || !$subdomain) {
     $host = $_SERVER['HTTP_HOST'] ?? '';
